@@ -28,7 +28,8 @@ d3.queue()
   .defer(d3.json, mapJsonUrl)
   .defer(d3.csv, mapCountryDataUrl, countryMapDataFormatter)
   .defer(d3.json, countryInfoJson)
-  .await( (error, countryInfo, seriesInfo, mapData, mapCountryData, jsonCountryInfo) => {
+  .await( (error, countryInfo, seriesInfo,
+    mapData, mapCountryData, jsonCountryInfo) => {
     let codeToNameMap = countryInfo.reduce((a, c) => {
         a[c.shortName] = c.countryCode;
         return a;
@@ -53,7 +54,8 @@ d3.queue()
         onDataLoaded.bind(null, countryMap, seriesInfo));
   });
 
-function drawMap(mapData, mapCountryData, codeToNameMap, countryMap, numericMap) {
+function drawMap(mapData, mapCountryData, codeToNameMap,
+        countryMap, numericMap) {
     let geoData = topojson.feature(mapData, mapData.objects.countries).features;
 
     geoData.forEach((c) => {
@@ -73,10 +75,6 @@ function drawMap(mapData, mapCountryData, codeToNameMap, countryMap, numericMap)
         }
     });
 
-    // let colorScale = d3.scaleOrdinal()
-    //                    .domain(subRegions)
-    //                    .range(d3.schemeCategory20c);
-
     let projection = d3.geoMercator()
                        .scale((width + 1) / 2 / Math.PI)
                        .translate([width / 2, height / 1.4]);
@@ -94,22 +92,13 @@ function drawMap(mapData, mapCountryData, codeToNameMap, countryMap, numericMap)
             .classed('country', true)
             .attr('d', path)
             .attr('fill', 'gray');
-            // .attr('fill', (d) =>{
-            //     if (d.id in numericMap) {
-            //         return colorScale(numericMap[d.id].subregion);
-            //     } else {
-            //         return 'black';
-            //     }
-            // });
 }
 
 function onDataLoaded(countryMap, seriesInfo, error, data) {
     let collectedData = getCollectedData(seriesInfo, data);
 
-    // let dataVisualizerStrategy = setGraphForYear.bind(null,
-    //     collectedData, countryMap, width, height, barPadding);
-
-    let dataVisualizerStrategy = setMapForYear.bind(null, collectedData, countryMap);
+    let dataVisualizerStrategy =
+        setMapForYear.bind(null, collectedData, countryMap);
 
     buildSelectors(seriesInfo, collectedData, dataVisualizerStrategy);
 
@@ -150,7 +139,8 @@ function getCollectedData(seriesInfo, data) {
         if (Object.keys(row).length > 0) {
             for (let key in row.data) {
                 if (row.data.hasOwnProperty(key)) {
-                    collectedData[row.indicatorCode][key][row.countryCode] = row.data[key];
+                    collectedData[row.indicatorCode][key][row.countryCode]
+                        = row.data[key];
                 }
             }
         }
