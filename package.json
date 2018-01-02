@@ -1,0 +1,25 @@
+{
+  "name": "udemy-advancedwebdeveloper",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000u\u0000d\u0000e\u0000m\u0000y\u0000-\u0000a\u0000d\u0000v\u0000a\u0000n\u0000c\u0000e\u0000d\u0000w\u0000e\u0000b\u0000d\u0000e\u0000v\u0000e\u0000l\u0000o\u0000p\u0000e\u0000r\u0000\r\u0000 \u0000",
+  "main": "index.js",
+  "dependencies": {
+    "eslint": "^4.10.0"
+  },
+  "devDependencies": {
+    "eslint-config-google": "^0.9.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glegeza/udemy-advancedwebdeveloper.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/glegeza/udemy-advancedwebdeveloper/issues"
+  },
+  "homepage": "https://github.com/glegeza/udemy-advancedwebdeveloper#readme"
+}

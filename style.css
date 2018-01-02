@@ -1,0 +1,36 @@
+svg {
+    margin: 0 auto;
+    display: block;
+    border: 1px solid black;
+}
+
+.country {
+    stroke: #ccc;
+    stroke-width: 0.25px;
+}
+
+select {
+    width: 400px;
+    display: block;
+    margin: 12px auto;;
+}
+
+h1 {
+    width: 600px;
+    display: block;
+    margin: 20px auto;
+    text-align: center;
+}
+
+#loading-msg {
+    text-align: center;
+    width: 500px;
+    margin: 10px auto;
+    display: block;
+}
+
+#selectors {
+    width: 400px;
+    text-align: center;
+    margin: 10px auto;
+}
