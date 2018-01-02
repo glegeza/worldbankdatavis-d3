@@ -1,2 +1,2 @@
 # worldbankdatavis-d3
-Visualizing some World Bank health data with D3
+Learning about D3 by visualizing some World Bank health data.
