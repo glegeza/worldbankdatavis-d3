@@ -6,6 +6,7 @@ let barPadding = 4;
 let startDate = 1960;
 let endDate = 2017;
 let dateRange = [];
+let currentData = {};
 for (let y = startDate; y <= endDate; y++) {
     dateRange.push(y);
 }
@@ -17,7 +18,17 @@ let seriesUrl = './data/hnp/HNP_StatsSeries.csv';
 let mapJsonUrl = '//unpkg.com/world-atlas@1.1.4/world/50m.json';
 let mapCountryDataUrl = './data/map/country_data.csv';
 
+let dataYear = -1;
+let dataSet = '';
+
 let start = new Date();
+
+let tooltip = d3.select('svg')
+                  .append('div')
+                    .classed('card', true)
+                    .classed('tooltip', true)
+                  .append('div')
+                    .classed('card-body', true);
 
 beginLoading();
 buildSvg(width, height);
@@ -30,6 +41,7 @@ d3.queue()
   .defer(d3.json, countryInfoJson)
   .await( (error, countryInfo, seriesInfo,
     mapData, mapCountryData, jsonCountryInfo) => {
+    console.log(seriesInfo);
     let codeToNameMap = countryInfo.reduce((a, c) => {
         a[c.shortName] = c.countryCode;
         return a;
@@ -61,6 +73,7 @@ function drawMap(mapData, mapCountryData, codeToNameMap,
     geoData.forEach((c) => {
         if (numericMap.hasOwnProperty(c.id)) {
             c.cca3 = numericMap[c.id].cca3;
+            c.countryInfo = countryMap[c.cca3];
         }
     });
 
@@ -91,7 +104,9 @@ function drawMap(mapData, mapCountryData, codeToNameMap,
             .append('path')
             .classed('country', true)
             .attr('d', path)
-            .attr('fill', 'gray');
+            .attr('fill', 'gray')
+            .on('mousemove', showTooltip)
+            .on('mouseout', hideTooltip);
 }
 
 function onDataLoaded(countryMap, seriesInfo, error, data) {
@@ -267,6 +282,10 @@ function setGraphForYear(collectedData, countryMap, width, height, barPadding) {
 
 function setMapForYear(collectedData, countryMap) {
     let finalData = getDataForSelectedYear(collectedData, countryMap, true);
+    currentData = finalData;
+
+    dataYear = +(d3.select('#year-select').property('value'));
+    dataSet = d3.select('#series-select').property('value');
 
     console.log(finalData);
     let seriesArray = [];
@@ -276,8 +295,6 @@ function setMapForYear(collectedData, countryMap) {
         }
     }
     let seriesExtents = d3.extent(seriesArray, (d) => d);
-    seriesArray = seriesArray.sort((a, b) => a - b);
-    console.log(seriesArray);
 
     let colorScale = d3.select('#log-scale').property('checked')
         ? d3.scaleLog()
@@ -382,6 +399,7 @@ function seriesInfoFormatter(row, i, headers) {
         seriesCode: row['Series Code'],
         indicatorName: row['Indicator Name'],
         definition: row['Short definition'],
+        units: row['Unit of measure'],
     };
 }
 
@@ -413,4 +431,40 @@ function beginLoading() {
         .append('p')
             .attr('id', 'loading-msg')
             .text(`Loading data from ${dataUrl}...`);
+}
+
+function showTooltip(d) {
+    let coords = d3.mouse(this);
+    let html = currentData.hasOwnProperty(d.cca3)
+        ? getDataTooltip(d)
+        : getEmptyTooltip(d);
+
+    let container = d3.select('.tooltip');
+
+    console.log(d3.select('svg').node().offsetWidth);
+
+    d3.select('.tooltip')
+        .style('opacity', 1)
+        .style('left', coords[0] + 'px')
+        .style('top', coords[1] + 'px');
+    d3.select('.card-body')
+        .html(html);
+}
+
+function hideTooltip() {
+    d3.select('.tooltip')
+        .style('opacity', 0);
+}
+
+function getDataTooltip(d) {
+    return `
+        <p>${d.countryInfo.shortName}</p>
+        <p>${currentData[d.cca3].seriesValue.toLocaleString()}</p>
+        `;
+}
+
+function getEmptyTooltip(d) {
+    return `
+    <p>No data available for ${d.countryInfo.shortName} for year ${dataYear}</p>
+    `;
 }

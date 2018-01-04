@@ -22,6 +22,17 @@ h1 {
     text-align: center;
 }
 
+.tooltip {
+    min-width: 800px;
+    opacity: 0;
+    position: absolute;
+    pointer-events: none;
+  }
+
+.card-body p {
+    margin: 1px;
+}
+
 #loading-msg {
     text-align: center;
     width: 500px;
