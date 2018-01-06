@@ -359,28 +359,6 @@ function seriesInfoFormatter(row, i, headers) {
     };
 }
 
-function countryDataFormatter(row, i, headers) {
-    if (row['Region'] === '') return;
-
-    return {
-        countryCode: row['Country Code'],
-        shortName: row['Short Name'],
-        longName: row['Long Name'],
-        region: row['Region'],
-    };
-}
-
-function countryMapDataFormatter(row) {
-    return {
-        country: row.country,
-        countryCode: row.countryCode,
-        population: +row.population,
-        medianAge: +row.medianAge,
-        fertilityRate: +row.fertilityRate,
-        populationDensity: +row.population / +row.landArea,
-    };
-}
-
 function beginLoading() {
     d3.select('#selectors').style('display', 'none');
     d3.select('body')
