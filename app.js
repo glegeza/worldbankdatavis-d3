@@ -11,7 +11,6 @@ for (let y = startDate; y <= endDate; y++) {
     dateRange.push(y);
 }
 
-let countryInfoUrl = './data/hnp/HNP_StatsCountry.csv';
 let countryInfoJson = './data/map/countries.json';
 let dataUrl = './data/hnp/HNP_StatsData.csv';
 let seriesUrl = './data/hnp/HNP_StatsSeries.csv';
@@ -34,53 +33,34 @@ beginLoading();
 buildSvg(width, height);
 
 d3.queue()
-  .defer(d3.csv, countryInfoUrl, countryDataFormatter)
   .defer(d3.csv, seriesUrl, seriesInfoFormatter)
   .defer(d3.json, mapJsonUrl)
-  .defer(d3.csv, mapCountryDataUrl, countryMapDataFormatter)
   .defer(d3.json, countryInfoJson)
-  .await( (error, countryInfo, seriesInfo,
-    mapData, mapCountryData, jsonCountryInfo) => {
-    let codeToNameMap = countryInfo.reduce((a, c) => {
-        a[c.shortName] = c.countryCode;
-        return a;
-    }, {});
-    let validCodes = getValidCountryCodeSet(countryInfo);
-    let countryMap = getCountryDictionary(countryInfo);
-
-    let numericMap = {};
-
-    console.log(jsonCountryInfo);
-    jsonCountryInfo.forEach((i) => {
-        numericMap[i.ccn3] = i;
-    });
-
-    drawMap(mapData, mapCountryData, codeToNameMap, countryMap, numericMap);
+  .await( (e, seriesInfo, topoJson, jsonCountryInfo) => {
+    let countryIdDataMap = getCountryIdMap(jsonCountryInfo);
+    drawMap(topoJson, countryIdDataMap);
 
     d3.csv(dataUrl,
-        dataSeriesFormatter.bind(null, validCodes),
-        onDataLoaded.bind(null, countryMap, seriesInfo));
+        dataSeriesFormatter,
+        onDataLoaded.bind(null, countryIdDataMap, seriesInfo));
   });
 
-function drawMap(mapData, mapCountryData, codeToNameMap,
-        countryMap, numericMap) {
+function getCountryIdMap(countryData) {
+    return countryData.reduce((a, c) => {
+        a.set(c.ccn3, c);
+        a.set(c.cca3, c);
+        return a;
+    }, new Map());
+}
+
+function drawMap(mapData, numericMap) {
     let geoData = topojson.feature(mapData, mapData.objects.countries).features;
 
     geoData.forEach((c) => {
-        if (numericMap.hasOwnProperty(c.id)) {
-            c.cca3 = numericMap[c.id].cca3;
-            c.countryInfo = countryMap[c.cca3];
-        }
-    });
-
-    let misses = [];
-    mapCountryData.forEach((c) => {
-        let name = c.country;
-        let id = c.id;
-        if (codeToNameMap.hasOwnProperty(name)) {
-            countryMap[codeToNameMap[name]].mapId = id;
-        } else {
-            misses.push(name);
+        let currentCountry = numericMap.get(c.id);
+        if (currentCountry !== undefined) {
+            c.cca3 = currentCountry.cca3;
+            c.countryInfo = currentCountry;
         }
     });
 
@@ -114,18 +94,6 @@ function onDataLoaded(countryMap, seriesInfo, error, data) {
     buildSelectors(seriesInfo, collectedData, dataVisualizerStrategy);
 
     d3.select('#loading-msg').remove();
-}
-
-function getCountryDictionary(countryInfo) {
-    let countryMap = {};
-    for (let i = 0; i < countryInfo.length; i++) {
-        countryMap[countryInfo[i].countryCode] = {
-            shortName: countryInfo[i].shortName,
-            longName: countryInfo[i].longName,
-            region: countryInfo[i].region,
-        };
-    }
-    return countryMap;
 }
 
 function getValidCountryCodeSet(countryInfo) {
@@ -299,7 +267,6 @@ function setMapForYear(collectedData, countryMap) {
     let borderColorScale = d3.scaleLog()
                              .domain(seriesExtents)
                              .range(['#F49E4C', '#3B8EA5']);
-    console.log(seriesExtents);
 
     d3.select('svg')
         .selectAll('.country')
@@ -373,8 +340,7 @@ function buildSeriesData(fullData, countries, seriesId, year) {
     return dataArray;
 }
 
-function dataSeriesFormatter(validCountries, row, i, headers) {
-    if (!validCountries.has(row['Country Code'])) return;
+function dataSeriesFormatter(row, i, headers) {
     let rowObj = {
         countryCode: row['Country Code'],
         indicatorCode: row['Indicator Code'],
@@ -450,13 +416,13 @@ function hideTooltip() {
 
 function getDataTooltip(d) {
     return `
-        <p>${d.countryInfo.shortName}</p>
+        <p>${d.countryInfo.name.common}</p>
         <p>${currentData[d.cca3].seriesValue.toLocaleString()}</p>
         `;
 }
 
 function getEmptyTooltip(d) {
     return `
-    <p>No data available for ${d.countryInfo.shortName} for year ${dataYear}</p>
+    <p>No data available for ${d.countryInfo.name.common} for year ${dataYear}</p>
     `;
 }
