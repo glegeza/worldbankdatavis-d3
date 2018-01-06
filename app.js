@@ -101,6 +101,7 @@ function getValidCountryCodeSet(countryInfo) {
 }
 
 function getCollectedData(seriesInfo, data) {
+    // Create an empty series code -> year map
     let collectedData = {};
     seriesInfo.forEach((code) => {
         collectedData[code.seriesCode] = {
@@ -111,17 +112,19 @@ function getCollectedData(seriesInfo, data) {
         });
     });
 
+    // Populate each year with series values keyed by CCA3 code
     data.forEach((row) => {
         if (Object.keys(row).length > 0) {
-            for (let key in row.data) {
-                if (row.data.hasOwnProperty(key)) {
-                    collectedData[row.indicatorCode][key][row.countryCode]
-                        = row.data[key];
+            for (let year in row.data) {
+                if (row.data.hasOwnProperty(year)) {
+                    collectedData[row.indicatorCode][year][row.countryCode]
+                        = row.data[year];
                 }
             }
         }
     });
 
+    // Remove years that have no associated data
     for (let code in collectedData) {
         if (collectedData.hasOwnProperty(code)) {
             let years = [];
@@ -194,7 +197,6 @@ function buildSelectors(seriesInfo, collectedData, dataVisualizerStrategy) {
             .classed('form-group', true)
             .attr('id', 'selectors');
 
-
     let seriesSelector = d3.select('#series-select');
 
     yearOptions = d3.select('#year-select');
@@ -225,9 +227,8 @@ function buildSelectors(seriesInfo, collectedData, dataVisualizerStrategy) {
 }
 
 function getDataForSelectedYear(collectedData, countryMap, asDict=false) {
-    let seriesSelector = d3.select('#series-select');
-    let selectedYear = +(d3.select('#year-select')).property('value');
-    let selectedSeries = seriesSelector.property('value');
+    let selectedYear = +(d3.select('#year-select').property('value'));
+    let selectedSeries = d3.select('#series-select').property('value');
     return asDict
         ? getSeriesDict(collectedData, countryMap,
             selectedSeries, selectedYear)
@@ -241,36 +242,21 @@ function setGraphForYear(collectedData, countryMap, width, height, barPadding) {
 }
 
 function setMapForYear(collectedData, countryMap) {
-    let finalData = getDataForSelectedYear(collectedData, countryMap, true);
-    currentData = finalData;
+    currentData = getDataForSelectedYear(collectedData, countryMap, true);
 
-    dataYear = +(d3.select('#year-select').property('value'));
-    dataSet = d3.select('#series-select').property('value');
-
-    let seriesArray = [];
-    for (let d in finalData) {
-        if (finalData.hasOwnProperty(d)) {
-            seriesArray.push(+(finalData[d].seriesValue));
-        }
-    }
-    let seriesExtents = d3.extent(seriesArray, (d) => d);
-
-    let colorScale = d3.select('#log-scale').property('checked')
-        ? d3.scaleLog()
-        : d3.scaleLinear();
-    colorScale = colorScale
-                    .domain(seriesExtents)
-                    .range(['#AB3428', '#3B8EA5']);
+    colorScale = d3.scaleQuantile()
+                    .domain(currentData.domain)
+                    .range(['#ab3428', '#a64337', '#9f5146', '#975c55', '#8e6865', '#827274', '#727b85', '#5e8594', '#3b8ea5']);
     let borderColorScale = d3.scaleLog()
-                             .domain(seriesExtents)
+                             .domain(currentData.extents)
                              .range(['#F49E4C', '#3B8EA5']);
 
     d3.select('svg')
         .selectAll('.country')
         .transition()
         .attr('fill', (d) =>{
-            if (finalData.hasOwnProperty(d.cca3)) {
-                let data = +(finalData[d.cca3].seriesValue);
+            if (currentData.hasOwnProperty(d.cca3)) {
+                let data = currentData[d.cca3].seriesValue;
                 let color = colorScale(data);
                 return color;
             } else {
@@ -278,8 +264,8 @@ function setMapForYear(collectedData, countryMap) {
             }
         })
         .attr('stroke', (d) => {
-            if (d.cca3 in finalData) {
-                let color = borderColorScale(+(finalData[d.cca3].seriesValue));
+            if (d.cca3 in currentData) {
+                let color = borderColorScale(currentData[d.cca3].seriesValue);
             } else {
                 return '#ccc';
             }
@@ -300,20 +286,32 @@ function setYears(collectedData) {
 }
 
 function getSeriesDict(fullData, countries, seriesId, year) {
-    let seriesData = {};
+    let seriesData = {
+        extents: [Number.MAX_VALUE, Number.MIN_VALUE],
+        domain: [],
+        year: year,
+    };
     for (let i = 0; i < dateRange.length; i++) {
         let dataYear = dateRange[i];
         let data = fullData[seriesId][dataYear];
         for (country in data) {
             if (data.hasOwnProperty(country)) {
+                let dataValue = data[country];
+                seriesData.domain.push(dataValue);
+                if (dataValue < seriesData.extents[0]) {
+                    seriesData.extents[0] = dataValue;
+                }
+                if (dataValue > seriesData.extents[1]) {
+                    seriesData.extents[1] = dataValue;
+                }
                 seriesData[country] = {
-                    seriesValue: data[country],
+                    seriesValue: dataValue,
                     latestYear: dataYear,
                     countryInfo: countries[country],
                 };
             }
         }
-        if (dataYear === +year) {
+        if (dataYear === year) {
             break;
         }
     }
@@ -329,8 +327,8 @@ function buildSeriesData(fullData, countries, seriesId, year) {
             dataArray.push( {
                 countryCode: entry,
                 countryInfo: countries[entry],
-                seriesValue: seriesData[entry].seriesValue,
-                latestYear: seriesData[entry].latestYear,
+                seriesValue: +(seriesData[entry].seriesValue),
+                latestYear: +(seriesData[entry].latestYear),
             });
         }
     }
@@ -345,7 +343,7 @@ function dataSeriesFormatter(row, i, headers) {
     };
     for (let i = 4; i < headers.length; i++) {
         if (row[headers[i]] !== '') {
-            rowObj.data[headers[i]] = row[headers[i]];
+            rowObj.data[headers[i]] = +(row[headers[i]]);
         }
     }
     return rowObj;
@@ -397,6 +395,6 @@ function getDataTooltip(d) {
 
 function getEmptyTooltip(d) {
     return `
-    <p>No data available for ${d.countryInfo.name.common} for year ${dataYear}</p>
+    <p>No data available for ${d.countryInfo.name.common} for year ${currentData.year}</p>
     `;
 }
