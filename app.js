@@ -11,11 +11,10 @@ for (let y = startDate; y <= endDate; y++) {
     dateRange.push(y);
 }
 
-let countryInfoJson = './data/map/countries.json';
-let dataUrl = './data/hnp/HNP_StatsData.csv';
-let seriesUrl = './data/hnp/HNP_StatsSeries.csv';
-let mapJsonUrl = '//unpkg.com/world-atlas@1.1.4/world/50m.json';
-let mapCountryDataUrl = './data/map/country_data.csv';
+let countryInfoUrl = './data/map/countries.json';
+let dataSeriesValuesUrl = './data/hnp/HNP_StatsData.csv';
+let dataSeriesDefinitionsUrl = './data/hnp/HNP_StatsSeries.csv';
+let topoJsonWorldMapUrl = '//unpkg.com/world-atlas@1.1.4/world/50m.json';
 
 let dataYear = -1;
 let dataSet = '';
@@ -31,14 +30,14 @@ beginLoading();
 buildSvg(width, height);
 
 d3.queue()
-  .defer(d3.csv, seriesUrl, seriesInfoFormatter)
-  .defer(d3.json, mapJsonUrl)
-  .defer(d3.json, countryInfoJson)
+  .defer(d3.csv, dataSeriesDefinitionsUrl, seriesInfoFormatter)
+  .defer(d3.json, topoJsonWorldMapUrl)
+  .defer(d3.json, countryInfoUrl)
   .await( (e, seriesInfo, topoJson, jsonCountryInfo) => {
     let countryIdDataMap = getCountryIdMap(jsonCountryInfo);
     drawMap(topoJson, countryIdDataMap);
 
-    d3.csv(dataUrl,
+    d3.csv(dataSeriesValuesUrl,
         dataSeriesFormatter,
         onDataLoaded.bind(null, countryIdDataMap, seriesInfo));
   });
@@ -388,7 +387,7 @@ function beginLoading() {
     d3.select('body')
         .append('p')
             .attr('id', 'loading-msg')
-            .text(`Loading data from ${dataUrl}...`);
+            .text(`Loading data from ${dataSeriesValuesUrl}...`);
 }
 
 function showTooltip(d) {
