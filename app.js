@@ -356,7 +356,6 @@ function seriesInfoFormatter(row, i, headers) {
         seriesCode: row['Series Code'],
         indicatorName: row['Indicator Name'],
         definition: row['Short definition'],
-        units: row['Unit of measure'],
     };
 }
 
