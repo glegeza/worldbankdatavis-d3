@@ -23,7 +23,7 @@ let dataSet = '';
 
 let start = new Date();
 
-let tooltip = d3.select('svg')
+let tooltip = d3.select('body')
                   .append('div')
                     .classed('card', true)
                     .classed('tooltip', true)
@@ -41,7 +41,6 @@ d3.queue()
   .defer(d3.json, countryInfoJson)
   .await( (error, countryInfo, seriesInfo,
     mapData, mapCountryData, jsonCountryInfo) => {
-    console.log(seriesInfo);
     let codeToNameMap = countryInfo.reduce((a, c) => {
         a[c.shortName] = c.countryCode;
         return a;
@@ -49,14 +48,11 @@ d3.queue()
     let validCodes = getValidCountryCodeSet(countryInfo);
     let countryMap = getCountryDictionary(countryInfo);
 
-    let alphaMap = {};
     let numericMap = {};
-    let subRegions = new Set();
 
+    console.log(jsonCountryInfo);
     jsonCountryInfo.forEach((i) => {
-        alphaMap[i.cca2] = i;
         numericMap[i.ccn3] = i;
-        subRegions.add(i.subregion);
     });
 
     drawMap(mapData, mapCountryData, codeToNameMap, countryMap, numericMap);
@@ -267,7 +263,6 @@ function getDataForSelectedYear(collectedData, countryMap, asDict=false) {
     let seriesSelector = d3.select('#series-select');
     let selectedYear = +(d3.select('#year-select')).property('value');
     let selectedSeries = seriesSelector.property('value');
-    console.log(`Data for year ${selectedYear}`);
     return asDict
         ? getSeriesDict(collectedData, countryMap,
             selectedSeries, selectedYear)
@@ -287,7 +282,6 @@ function setMapForYear(collectedData, countryMap) {
     dataYear = +(d3.select('#year-select').property('value'));
     dataSet = d3.select('#series-select').property('value');
 
-    console.log(finalData);
     let seriesArray = [];
     for (let d in finalData) {
         if (finalData.hasOwnProperty(d)) {
@@ -440,8 +434,6 @@ function showTooltip(d) {
         : getEmptyTooltip(d);
 
     let container = d3.select('.tooltip');
-
-    console.log(d3.select('svg').node().offsetWidth);
 
     d3.select('.tooltip')
         .style('opacity', 1)
