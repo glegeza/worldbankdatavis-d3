@@ -20,8 +20,6 @@ let mapCountryDataUrl = './data/map/country_data.csv';
 let dataYear = -1;
 let dataSet = '';
 
-let start = new Date();
-
 let tooltip = d3.select('body')
                   .append('div')
                     .classed('card', true)
