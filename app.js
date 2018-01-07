@@ -246,7 +246,7 @@ function setMapForYear(collectedData, countryMap) {
 
     colorScale = d3.scaleQuantile()
                     .domain(currentData.domain)
-                    .range(['#ab3428', '#a64337', '#9f5146', '#975c55', '#8e6865', '#827274', '#727b85', '#5e8594', '#3b8ea5']);
+                    .range(['#f7f4f9', '#e7e1ef', '#d4b9da', '#c994c7', '#df65b0', '#e7298a', '#ce1256', '#980043', '#67001f']);
     let borderColorScale = d3.scaleLog()
                              .domain(currentData.extents)
                              .range(['#F49E4C', '#3B8EA5']);
